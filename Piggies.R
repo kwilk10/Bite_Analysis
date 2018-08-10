@@ -245,8 +245,26 @@ samples = seq(0,1,length = 83)
 nbasis = length(samples) + norder -2
 mybasis = create.bspline.basis(c(0,1), nbasis, norder, samples)
 myfdPar = fdPar(mybasis, 4, lambda)
-myfd = smooth.basis(samples, Pig10_wide$C1, myfdPar)$fd
-plot(myfd)
+myfd_c1 = smooth.basis(samples, Pig10_wide$C1, myfdPar)$fd
+plot(myfd_c1)
+myfd_c2 = smooth.basis(samples, Pig10_wide$C2, myfdPar)$fd
+lines(myfd_c2)
+myfd_c3 = smooth.basis(samples, Pig10_wide$C3, myfdPar)$fd
+lines(myfd_c3)
+myfd_c4 = smooth.basis(samples, Pig10_wide$C4, myfdPar)$fd
+lines(myfd_c4)
+myfd_c5 = smooth.basis(samples, Pig10_wide$C5, myfdPar)$fd
+lines(myfd_c5)
+myfd_c7 = smooth.basis(samples, Pig10_wide$C7, myfdPar)$fd
+lines(myfd_c7)
+myfd_c8 = smooth.basis(samples, Pig10_wide$C8, myfdPar)$fd
+lines(myfd_c8)
+myfd_c9 = smooth.basis(samples, Pig10_wide$C9, myfdPar)$fd
+lines(myfd_c9)
+myfd_c10 = smooth.basis(samples, Pig10_wide$C10, myfdPar)$fd
+lines(myfd_c10)
+myfd_c11 = smooth.basis(samples, Pig10_wide$C11, myfdPar)$fd
+lines(myfd_c11)
 ## Continuous registration??
 lambda <- 1
 nbasis <- myfd$basis$nbasis
@@ -259,25 +277,5 @@ coef0 <- matrix(0, nrow = nbasis, ncol = ntrials)
 Wfd0 <- fd(coef0, mybasis)
 WfdPar <- fdPar(Wfd0, 2, lambda)
 reglist <- register.fd(y0fd, yfd, WfdPar, iterlim = 10, dbglev = 1)
-
-#####
-
-
-
-nbasis <- length(samples) + norder-2
-
-myfdPar <- fdPar(mybasis, 4, lambda)
-myfd <- smooth.basis(samples, as.matrix(Pig10_carrot[Cycle == 1]$TMJdata1.rz), myfdPar)$fd
-
-plot(myfd)
-plot(myfd[1]) # plots the first function
-plot(myfd[1:3]) # plots the first three functions
-
-par(mfrow=c(1,1), pty="m")
-plotfit.fd(dataset, samples, myfd)
-
-FirstDeriv <- deriv.fd(myfd, 1) 
-
-plot(FirstDeriv)
 
 
