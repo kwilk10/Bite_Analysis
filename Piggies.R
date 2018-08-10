@@ -241,7 +241,7 @@ plot(accelmeanfd)
 
 lambda = 1e-12
 norder = 6
-samples = seq(0,1,length = 83)
+samples = seq(0,1,length = 84)
 nbasis = length(samples) + norder -2
 mybasis = create.bspline.basis(c(0,1), nbasis, norder, samples)
 myfdPar = fdPar(mybasis, 4, lambda)
