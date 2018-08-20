@@ -196,17 +196,71 @@ myfd_c10 = smooth.basis(samples, Pig10_wide$C10, myfdPar)$fd
 lines(myfd_c10)
 myfd_c11 = smooth.basis(samples, Pig10_wide$C11, myfdPar)$fd
 lines(myfd_c11)
-## Continuous registration??
+
+
+
+## Continuous registration
+
+## First lets rework our functional data object
+  ## We will probably want to wrap this bit into a function
+  ## So we can do it down the line with different datasets
+  ## but thats for future claire and katherine
+
+## Our parameters
+#smaller lambda --> overfitting 
+lambda = 1e-12
+# number of splits (see knots above, this is the same as the number of knots we had)
+norder = 6
+#split 0 to 1 into 84 values (length of our cycles )
+samples = seq(0,1,length = 84)
+# Define the number of basis functions we want
+nbasis = length(samples) + norder -2
+# Create basic basis functions with our parameters
+mybasis = create.bspline.basis(c(0,1), nbasis, norder, samples)
+myfdPar = fdPar(mybasis, 4, lambda)
+# Dataset has to be in matrix form
+dataset = as.matrix(Pig10_wide)
+## Lets make it a fd object based off of our basis functions! woohoo! 
+myfd = smooth.basis(samples, dataset, myfdPar)$fd
+
+## Now lets do continuous registration
 lambda <- 1
+## This should be the same as the nbasis above but are now pulling it from our fd object
 nbasis <- myfd$basis$nbasis
 ntrials <- dim(Pig10_wide)[2]
+#Take the mean of the functional data objects to be our target fd object
 y0fd <- mean.fd(myfd)
+# functions to be registered to y0fd (the target object)
 yfd = myfd
+# vectors for our warping function (need to look at this more...)
 y0vec = eval.fd(samples, y0fd)
 yvec <- eval.fd(samples, yfd)
+# Coefficeints for a warping function
 coef0 <- matrix(0, nrow = nbasis, ncol = ntrials)
 Wfd0 <- fd(coef0, mybasis)
 WfdPar <- fdPar(Wfd0, 2, lambda)
+#The actual registration we are doing. 
+#interlim --> number of iterations
+#dbglev --> controls amount of information printed (could be 0, 1, or 2)
 reglist <- register.fd(y0fd, yfd, WfdPar, iterlim = 10, dbglev = 1)
 
+#gives the names of things we can call on reglist
+names(reglist)
+
+
+## LETS PLOT EVERYTHING
+#plots registered fd objects
+plot(reglist$regfd)
+#plot original fd obj for comparison
+plot(myfd)
+#plots the warp functions
+plot(reglist$warpfd)
+
+
+## Calculate means of original fd and registered fd
+origMean <- mean.fd(myfd)
+regMean <- mean.fd(reglist$regfd)
+#plot them on same plot
+plot(origMean)
+lines(regMean, col = 2)
 
