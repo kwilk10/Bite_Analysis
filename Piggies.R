@@ -33,16 +33,10 @@ pig10_min = Pig10_carrot[cycles == -1]
 
 plot(Pig10_carrot$TMJdata1.rz,type='l')
 abline(v = pig10_min$frame, col = 'red')
-
-
 ##
-##
+
 cycle = 0
 Pig10_carrot$Cycle = NA
-
-########################################################################
-## This is the start of the changes
-#####################################################################
 
 ## Add column for index to order later
 index = 1:nrow(Pig10_carrot)
@@ -50,7 +44,7 @@ Pig10_carrot$Index = index
 
 ## Create new dataframe to put in rows that indicate beginning of cycle
 cycle_start = (Pig10_carrot[cycles == -1])[1]
-
+#
 for(i in 1:length(Pig10_carrot$TMJdata1.rz)){
   if(Pig10_carrot$cycles[i] == -1){
     cycle = cycle + 1
@@ -76,9 +70,7 @@ for(i in 2:17){
   lines(Pig10_carrot[Cycle == i]$TMJdata1.rz)
 }
 
-
-
-## Calculate lenght of each cycle
+## Calculate length of each cycle
 cycle_lengths = Pig10_carrot[,.N, by = Cycle]
 cycle_lengths
 
@@ -86,15 +78,6 @@ cycle_lengths
 Pig10_carrot = Pig10_carrot[, frame := frame - min(frame), by = Cycle]
 ## Noramlize soe each frame ends at 1 by Cycle
 Pig10_carrot = Pig10_carrot[, frame := frame/max(frame), by = Cycle]
-
-## We really don't need any of this...
-Pig10_carrot[Cycle == 1]
-length(Pig10_carrot[Cycle == 1]$TMJdata1.rz)
-c1_int = as.data.table(approx(Pig10_c1$frame, Pig10_c1$TMJdata1.rz, n = 21 ))
-colnames(c1_int) = c('frame', 'TMJdata1.rz')
-c1_new = rbind(c1_int, Pig10_c1)
-c1_new = c1_new[order(frame)]
-c1_new = c1_new[2:84]
 
 ## Function to interprolate data to make all cycles same length
 ## Use max cycle of 84
@@ -111,7 +94,6 @@ inter_func = function(data, cycle){
   return(data2)
 
 }
-
 
 Pig10_Cy1 = inter_func(Pig10_carrot, 1)
 
@@ -136,58 +118,7 @@ ggplot(Pig10_inter, aes(x = frame, y = TMJdata1.rz, colour = Cycle)) +
   geom_line()+
   facet_wrap(~Cycle)
 
-
-######
-#time normalize each chew cycle to have the same X-axis
-# Plot the curves starting at time zero 
-times <- Pig10_carrot$frame[Pig10_carrot$Cycle == 1]
-times.starting.at.0 <- times - min(times) 
-plot(times.starting.at.0, 
-     Pig10_carrot[Cycle == 1]$TMJdata1.rz, type='l', 
-     xlim=c(0, 140))
-for(i in 2:17){
-  times <- Pig10_carrot$frame[Pig10_carrot$Cycle == i]
-  times.starting.at.0 <- times - min(times) 
-  lines(times.starting.at.0, Pig10_carrot[Cycle == i]$TMJdata1.rz)
-}
-
-# Plot curves with normalized time 
-times <- Pig10_carrot$frame[Pig10_carrot$Cycle == 1]
-times.starting.at.0 <- times - min(times) 
-normalized.time <- times.starting.at.0 / max(times.starting.at.0)
-plot(normalized.time, 
-     Pig10_carrot[Cycle == 1]$TMJdata1.rz, type='l')
-for(i in 2:17){
-  times <- Pig10_carrot$frame[Pig10_carrot$Cycle == i]
-  times.starting.at.0 <- times - min(times) 
-  normalized.time <- times.starting.at.0 / max(times.starting.at.0)
-  lines(normalized.time, Pig10_carrot[Cycle == i]$TMJdata1.rz)
-}
-
-plt <- as.data.frame(Pig10_carrot)
-for (j in 2:7) {
-  times <- plt$frame[plt$Cycle == 1]
-  times.starting.at.0 <- times - min(times) 
-  normalized.time <- times.starting.at.0 / max(times.starting.at.0)
-  pdf.filename <- paste0(
-    "FDA/Pig10_carrot_", str_replace(string = names(plt)[j], pattern = "[.]", replacement = "_"), ".pdf")
-  pdf(pdf.filename)
-  plot(normalized.time,  
-       plt[plt$Cycle == 1, j], type='l', ylim=range(plt[, j]), 
-       main=names(plt)[j], 
-       xlab="Normalized time", ylab="Degrees")
-  for(i in 2:17){
-    times <- plt$frame[plt$Cycle == i]
-    times.starting.at.0 <- times - min(times) 
-    normalized.time <- times.starting.at.0 / max(times.starting.at.0)
-    lines(normalized.time, plt[plt$Cycle == i, j])
-  }
-  dev.off()
-}
-
-#########
 #turn each cycle into functional data
-
 ## Long to Wide
 library(tidyr) ## Used for spread function below
 
@@ -205,7 +136,7 @@ colnames(Pig10_wide) = c('id',paste0('C', 1:5), paste0('C',7:11))
 ## Don't want id column to do fda
 Pig10_wide = Pig10_wide[,.(C1, C2, C3, C4,C5,C7,C8,C9,C10,C11)]
 
-
+#Create Functional Data
 Pig10_fd = function(x){
   x <- as.matrix(x)
   print('hello its working')
@@ -226,7 +157,7 @@ Pigfd_2 = Pig10_fd(Pig10_inter[Cycle == 2]$TMJdata1.rz)
 
 plot(Pigfd_all)
 
-#get 1st and 2nd derivatives of each cycle.
+#get 2nd derivative of each cycle.
 #unregistered acceleration function
 accelfd = deriv.fd(Pigfd_all, 2)
 plot(accelfd)
