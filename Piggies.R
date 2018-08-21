@@ -5,10 +5,7 @@
   #ideally in rz axis (vertical)
 
 #Where in the cycle does food impact kinematics?
-# (rx, ry, rz)*(D,V,A)
-
-## This is an example change! Hiiiiiiii
-
+# (tx, ry, rz)*(D,V,A)
 
 #install.packages('pastecs')
 
@@ -33,7 +30,6 @@ pig10_min = Pig10_carrot[cycles == -1]
 
 plot(Pig10_carrot$TMJdata1.rz,type='l')
 abline(v = pig10_min$frame, col = 'red')
-##
 
 cycle = 0
 Pig10_carrot$Cycle = NA
@@ -139,8 +135,6 @@ Pig10_wide = Pig10_wide[,.(C1, C2, C3, C4,C5,C7,C8,C9,C10,C11)]
 #Create Functional Data
 Pig10_fd = function(x){
   x <- as.matrix(x)
-  print('hello its working')
-  
   knots=c(0,.2,.4,.6,.8,1.0)
   mybasis <- create.bspline.basis(rangeval=c(0, 1), nbasis=NULL, 
                                   norder=4, breaks=knots, dropind=NULL, 
@@ -166,45 +160,19 @@ plot(accelfd)
 accelmeanfd= mean(accelfd)
 plot(accelmeanfd)
 
-#decide landmark registration or continuous registration
-#landmark registration
-
-
-lambda = 1e-12
-norder = 6
-samples = seq(0,1,length = 84)
-nbasis = length(samples) + norder -2
-mybasis = create.bspline.basis(c(0,1), nbasis, norder, samples)
-myfdPar = fdPar(mybasis, 4, lambda)
-myfd_c1 = smooth.basis(samples, Pig10_wide$C1, myfdPar)$fd
-plot(myfd_c1)
-myfd_c2 = smooth.basis(samples, Pig10_wide$C2, myfdPar)$fd
-lines(myfd_c2)
-myfd_c3 = smooth.basis(samples, Pig10_wide$C3, myfdPar)$fd
-lines(myfd_c3)
-myfd_c4 = smooth.basis(samples, Pig10_wide$C4, myfdPar)$fd
-lines(myfd_c4)
-myfd_c5 = smooth.basis(samples, Pig10_wide$C5, myfdPar)$fd
-lines(myfd_c5)
-myfd_c7 = smooth.basis(samples, Pig10_wide$C7, myfdPar)$fd
-lines(myfd_c7)
-myfd_c8 = smooth.basis(samples, Pig10_wide$C8, myfdPar)$fd
-lines(myfd_c8)
-myfd_c9 = smooth.basis(samples, Pig10_wide$C9, myfdPar)$fd
-lines(myfd_c9)
-myfd_c10 = smooth.basis(samples, Pig10_wide$C10, myfdPar)$fd
-lines(myfd_c10)
-myfd_c11 = smooth.basis(samples, Pig10_wide$C11, myfdPar)$fd
-lines(myfd_c11)
-
-
+#problems: we need to use the 2nd derivative and apply a 
+#  penalty function to it *PEN2(x) = Z[D2x(t)]2dt* 
+#  OR a roughness penalty *ROUGH(f)=Z[D2f(t)]2dt*  in order to smooth it like beth did?
+# Right now i'm confused. Why does our acceleration look so bad!?
+# Coach thinks we need to take the 4th derivative, and add the roughness penalty to it so the
+# displacement data will be smoothed appropriately...?? Does that make sense?
 
 ## Continuous registration
 
 ## First lets rework our functional data object
   ## We will probably want to wrap this bit into a function
   ## So we can do it down the line with different datasets
-  ## but thats for future claire and katherine
+  ## but thats for future claire and katherine :)
 
 ## Our parameters
 #smaller lambda --> overfitting 
@@ -264,3 +232,48 @@ regMean <- mean.fd(reglist$regfd)
 plot(origMean)
 lines(regMean, col = 2)
 
+##########################################################################
+
+#landmark registration Parameters???
+fdobj = Pigfd_all
+ximarks = #max close, max open, transitions
+x0marks = xmeanmarks
+ylambda = 1e-10
+returnMatrix=TRUE
+
+#landmark registration function
+landmarkreg <- function(fdobj, ximarks, x0marks=xmeanmarks,
+                        WfdPar=NULL, monwrd=FALSE, ylambda=1e-10,
+                        returnMatrix=FALSE){
+}
+
+  #  Arguments:
+  #  FDOBJ   ... functional data object for curves to be registered
+  #  XIMARKS ... N by NL array of times of interior landmarks for
+  #                 each observed curve
+  #  XOMARKS ... vector of length NL of times of interior landmarks for
+  #                 target curve
+  #  WFDPAR  ... a functional parameter object defining a warping function.  
+  #                 If NULL, registration is done using linear interpolation
+  #                 of lamdmark times in XIMARKS plotted against corresponding 
+  #                 target times in X0MARKS.
+  #  MONWRD  ... If TRUE, warping functions are estimated by monotone smoothing,
+  #                 otherwise by regular smoothing.  The latter is faster, but
+  #                 not guaranteed to produce a strictly monotone warping
+  #                 function.  If MONWRD is 0 and an error message results
+  #                 indicating nonmonotonicity, rerun with MONWRD = 1.
+  #                 Default:  TRUE
+  #  YLAMBDA ... smoothing parameter to be used in computing the registered
+  #                 functions.  For high dimensional bases, local wiggles may be
+  #                 found in the registered functions or its derivatives that are
+  #                 not seen in the unregistered functions.  In this event, this
+  #                 parameter should be increased.
+  #  Returns:
+  #  FDREG   ... a functional data object for the registered curves
+  #  WARPFD  ... a functional data object for the warping functions
+  #  WFD     ... a functional data object for the W functions defining the
+  #              warping functions
+  #  RETURNMATRIX ... If False, a matrix in sparse storage model can be returned
+  #               from a call to function BsplineS.  See this function for
+  #               enabling this option.
+  
