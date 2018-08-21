@@ -245,7 +245,14 @@ returnMatrix=TRUE
 landmarkreg <- function(fdobj, ximarks, x0marks=xmeanmarks,
                         WfdPar=NULL, monwrd=FALSE, ylambda=1e-10,
                         returnMatrix=FALSE){
+  fdobj = Pigfd_all
+  ximarks = #points we want to use as landmarks on the x-axis (max close)
+  ylambda = 1e-10
+  
 }
+
+MaxClose = landmarkreg(Pigfd_all)
+plot(MaxClose)
 
   #  Arguments:
   #  FDOBJ   ... functional data object for curves to be registered
