@@ -234,53 +234,46 @@ lines(regMean, col = 2)
 
 ##########################################################################
 
-#landmark registration Parameters???
-fdobj = Pigfd_all
-ximarks = #max close, max open, transitions
-x0marks = xmeanmarks
-ylambda = 1e-10
-returnMatrix=TRUE
+## Landmark Registration
 
-#landmark registration function
-landmarkreg <- function(fdobj, ximarks, x0marks=xmeanmarks,
-                        WfdPar=NULL, monwrd=FALSE, ylambda=1e-10,
-                        returnMatrix=FALSE){
-  fdobj = Pigfd_all
-  ximarks = #points we want to use as landmarks on the x-axis (max close)
-  ylambda = 1e-10
+#First take the splines created from our fd object 
+#and put into separate data.table
+splines = as.data.table(myfd$coefs)
+
+#Create an empty list to put things in later
+peak_x = list()
+#These are the x values on the plots
+x_vals = as.matrix(myfd$basis$params)
+
+#Loop through all columns in our splines list
+for(col in colnames(splines)){
+
+  c = splines %>% select(col)
   
+  #split colname string so we can select appropriate cycle
+  cyc = as.numeric(strsplit(col, 'C')[[1]][2])
+  #Select frames for corresponding cycle
+  frames = Pig10_inter[Cycle == cyc,][,.(frame)]
+  #Add column with spline points
+  frames = frames[,spline := c]
+  #Now we just want the x value (frame) corresponding to maximum spline point
+  peak_x[[cyc]] = frames[which.max(frames$spline)]$frame
 }
+#Unlist our peak_x to use late
+peak_x = unlist(peak_x)
+#Take the mean of it
+mean_peak = mean(peak_x)
 
-MaxClose = landmarkreg(Pigfd_all)
-plot(MaxClose)
+#Create some W functions and stuff
+  #Still not 100% certain what these do
+wbasisLM = create.bspline.basis(c(0,1), 4, 3, c(0, mean_peak,1))
+WfdLM    = fd(matrix(0,4,1),wbasisLM)
+WfdParLM = fdPar(WfdLM,1,1e-12)
 
-  #  Arguments:
-  #  FDOBJ   ... functional data object for curves to be registered
-  #  XIMARKS ... N by NL array of times of interior landmarks for
-  #                 each observed curve
-  #  XOMARKS ... vector of length NL of times of interior landmarks for
-  #                 target curve
-  #  WFDPAR  ... a functional parameter object defining a warping function.  
-  #                 If NULL, registration is done using linear interpolation
-  #                 of lamdmark times in XIMARKS plotted against corresponding 
-  #                 target times in X0MARKS.
-  #  MONWRD  ... If TRUE, warping functions are estimated by monotone smoothing,
-  #                 otherwise by regular smoothing.  The latter is faster, but
-  #                 not guaranteed to produce a strictly monotone warping
-  #                 function.  If MONWRD is 0 and an error message results
-  #                 indicating nonmonotonicity, rerun with MONWRD = 1.
-  #                 Default:  TRUE
-  #  YLAMBDA ... smoothing parameter to be used in computing the registered
-  #                 functions.  For high dimensional bases, local wiggles may be
-  #                 found in the registered functions or its derivatives that are
-  #                 not seen in the unregistered functions.  In this event, this
-  #                 parameter should be increased.
-  #  Returns:
-  #  FDREG   ... a functional data object for the registered curves
-  #  WARPFD  ... a functional data object for the warping functions
-  #  WFD     ... a functional data object for the W functions defining the
-  #              warping functions
-  #  RETURNMATRIX ... If False, a matrix in sparse storage model can be returned
-  #               from a call to function BsplineS.  See this function for
-  #               enabling this option.
-  
+#Throw it all into the landmarkreg function
+  #peak_x are the points we are landmarking (max vals)
+regListLM = landmarkreg(myfd, peak_x,mean_peak, WfdParLM, TRUE)                                
+names(regListLM)
+
+#LETS PLOT IT
+plot(regListLM$regfd)
