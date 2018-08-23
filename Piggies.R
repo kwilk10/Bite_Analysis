@@ -151,21 +151,17 @@ Pigfd_2 = Pig10_fd(Pig10_inter[Cycle == 2]$TMJdata1.rz)
 
 plot(Pigfd_all)
 
-#get 2nd derivative of each cycle.
+#get 1st derivative of each cycle.
 #unregistered acceleration function
-accelfd = deriv.fd(Pigfd_all, 2)
+velfd = deriv.fd(myfd, 1)
+plot(velfd)
+#get 2nd derivative
+accelfd = deriv.fd(myfd, 2)
 plot(accelfd)
 
 #unregistered mean function
 accelmeanfd= mean(accelfd)
 plot(accelmeanfd)
-
-#problems: we need to use the 2nd derivative and apply a 
-#  penalty function to it *PEN2(x) = Z[D2x(t)]2dt* 
-#  OR a roughness penalty *ROUGH(f)=Z[D2f(t)]2dt*  in order to smooth it like beth did?
-# Right now i'm confused. Why does our acceleration look so bad!?
-# Coach thinks we need to take the 4th derivative, and add the roughness penalty to it so the
-# displacement data will be smoothed appropriately...?? Does that make sense?
 
 ## Continuous registration
 
@@ -194,12 +190,12 @@ myfd = smooth.basis(samples, dataset, myfdPar)$fd
 ## Now lets do continuous registration
 lambda <- 1
 ## This should be the same as the nbasis above but are now pulling it from our fd object
-nbasis <- myfd$basis$nbasis
+nbasis <- accelfd$basis$nbasis
 ntrials <- dim(Pig10_wide)[2]
 #Take the mean of the functional data objects to be our target fd object
-y0fd <- mean.fd(myfd)
+y0fd <- mean.fd(accelfd)
 # functions to be registered to y0fd (the target object)
-yfd = myfd
+yfd = accelfd
 # vectors for our warping function (need to look at this more...)
 y0vec = eval.fd(samples, y0fd)
 yvec <- eval.fd(samples, yfd)
@@ -220,13 +216,13 @@ names(reglist)
 #plots registered fd objects
 plot(reglist$regfd)
 #plot original fd obj for comparison
-plot(myfd)
+plot(accelfd)
 #plots the warp functions
 plot(reglist$warpfd)
 
 
 ## Calculate means of original fd and registered fd
-origMean <- mean.fd(myfd)
+origMean <- mean.fd(accelfd)
 regMean <- mean.fd(reglist$regfd)
 #plot them on same plot
 plot(origMean)
