@@ -268,7 +268,7 @@ WfdParLM = fdPar(WfdLM,1,1e-12)
 
 #Throw it all into the landmarkreg function
   #peak_x are the points we are landmarking (max vals)
-regListLM = landmarkreg(myfd, peak_x,mean_peak, WfdParLM, TRUE)                                
+regListLM = landmarkreg(accelfd, peak_x,mean_peak, WfdParLM, TRUE)                                
 names(regListLM)
 
 #LETS PLOT IT
