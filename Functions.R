@@ -3,8 +3,11 @@ library(dplyr); library(fda); library(tidyr)
 
 ## Function to read in data and time normalize
 identify_cycles = function(data, axis, cutoff = -10){
-  keep = c(axis, 'frame')
-  data = fread(data, select = keep)
+  
+  data = fread(data)
+  colnames(data) = c('frame','tx','ty','tz','rx','ry','rz')
+  data = data[,.(frame, get(axis))]
+  colnames(data) = c('frame', axis)
   
   
   turn_points = turnpoints(data[[axis]])
