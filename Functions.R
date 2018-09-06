@@ -41,8 +41,8 @@ identify_cycles = function(data, axis, cutoff = -10){
   
   ## Bind data with cycle start, adding the duplicate rows
   ## That is, so cycle 2 starts at end point of cycle 1 etc. 
-  data = rbind(cycle_start, data)
-  data = data[order(Index)]
+  #data = rbind(cycle_start, data)
+  #data = data[order(Index)]
   return(data)
 }
 
