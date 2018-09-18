@@ -21,6 +21,7 @@ animal_from_filename <- function(name) {
 
 # Can't shake the feeling I could have done this better, vectorized and more R-like, but it's fine.
 
+# TODO: test at all
 read_data <- function(path, datapath) {
   # Here we pull in all of the descriptor files from which we shall pull
   # in all the data files.
@@ -56,6 +57,7 @@ read_data <- function(path, datapath) {
 
       # Flag the heck out of it!
       newframe$animal <- animal
+      newframe$animal_id <- individual
       newframe$food <- food
       newframe$sequence <- row$Sequence
       newframe$date <- datestamp
@@ -84,6 +86,52 @@ read_data <- function(path, datapath) {
   ret_df
 }
 
+localextrema <- function(x, lookbehind = 1, threshold = 0, 
+                         type = 'minima', scaled = FALSE, stddev = 0) {
+  if (type == 'minima') {
+    signdiff <- 2
+  }
+  else if (type == 'maxima') {
+    signdiff <- -2
+  }
+  else {
+    stop(c("Invalid type: ", type, " choose either 'maxima' or 'minima'"))
+  }
+  
+  if (scaled == TRUE) {
+    vec <- scale(x)
+  }
+  else {
+    vec <- x
+  }
+  
+  changes <- which(diff(sign(diff(vec))) == signdiff) + 1
+  if (missing(stddev) | scaled == FALSE) {
+    changes[vec[changes - lookbehind] - vec[changes] > threshold]
+  }
+  else {
+    if (type == 'minima') {
+      changes[vec[changes] < stddev]
+    }
+    else {
+      changes[vec[changes] > stddev]
+    }
+  }
+}
+
+real_minima <- function(x, cname) {
+  indices <- localextrema(x[,cname], scaled = TRUE, stddev = -1)
+  x$real_cycle <- numeric(nrow(x))
+
+  for (i in indices) {
+    x[i, "real_cycle"] <- match(i, indices)
+  }
+  
+  x[x$real_cycle == 0, "real_cycle"] <- NA
+  x$real_cycle <- na.locf(x$real_cycle, na.rm = FALSE)
+  x
+}
+
 # Main function
 run_all <- function() {
   # Settables
@@ -93,6 +141,9 @@ run_all <- function() {
   SAVE_DIR <- paste0(PARENT, 'prepared/')
 
   df <- read_data(PARAM_DIR, DATA_DIR)
+  df <- real_minima(df, "TMJdata1.rz")
+
+  save(df, file = paste0(SAVE_DIR, "data.Rdata"))
   df
 }
 
