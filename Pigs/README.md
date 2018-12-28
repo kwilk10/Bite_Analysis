@@ -27,8 +27,8 @@ Outputs:
  
 #### [FDA_food.R](./FDA_food.R)
 
-This script uses the raw, interprolated data outputed by [Interprolate.R](./Interprolate.R) script and runs some FDA by food type. Currently built only to work with X.TMJdata.rz axis. Runs some continuous registration and regular functional data analysis. 
+This script uses the raw, interprolated data outputed by [Interprolate.R](./Interpolate.R) script and runs some FDA by food type. Currently built only to work with X.TMJdata.rz axis. Runs some continuous registration and regular functional data analysis. 
 
 #### [FDA_by_animal.R](./FDA_by_animal.R)
 
-This script uses the raw, interprolated data outputed by [Interprolate.R](./Interprolate.R) script and runs some FDA by animal ID. Currently built only to work with X.TMJdata.rz axis. Runs some continuous registration and regular functional data analysis.  
+This script uses the raw, interprolated data outputed by [Interprolate.R](./Interpolate.R) script and runs some FDA by animal ID. Currently built only to work with X.TMJdata.rz axis. Runs some continuous registration and regular functional data analysis.  
