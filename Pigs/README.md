@@ -4,7 +4,7 @@
 
 Scripts should be run in the following order (FDA_food.R and FDA_by_animal.R are interchangeable)
  - [Cycle_Matching.R](./Cycle_Matching.R)
- - [Interprolate.R](./Interpolate.R)
+ - [Interpolate.R](./Interpolate.R)
  - [FDA_food.R](./FDA_food.R) or [FDA_by_animal.R](./FDA_by_animal.R)
 
 #### [Cycle_Matching.R](./Cycle_Matching.R)
@@ -17,7 +17,7 @@ Outputs:
     pig_cycles_full.csv in working directory
     
     
-#### [Interprolate.R](./Interpolate.R)
+#### [Interpolate.R](./Interpolate.R)
 
 This script uses the raw, labeled data, *pig_cycles_full.csv* as outputted by [Cycle_Matching.R](./Cycle_Matching.R) script. It interprolates data to each cycle so that each cycle is 163 frames long. It is currently set up just to work with X.TMJdata.rz axis (as of 12/28/2018). It again combines all food, animal, and data combinations into a single master file but only keeps the X.TMJdata.rz axis data (as of 12/28/2019). 
 
@@ -27,8 +27,8 @@ Outputs:
  
 #### [FDA_food.R](./FDA_food.R)
 
-This script uses the raw, interprolated data outputed by [Interprolate.R](./Interpolate.R) script and runs some FDA by food type. Currently built only to work with X.TMJdata.rz axis. Runs some continuous registration and regular functional data analysis. 
+This script uses the raw, interprolated data outputed by [Interpolate.R](./Interpolate.R) script and runs some FDA by food type. Currently built only to work with X.TMJdata.rz axis. Runs some continuous registration and regular functional data analysis. 
 
 #### [FDA_by_animal.R](./FDA_by_animal.R)
 
-This script uses the raw, interprolated data outputed by [Interprolate.R](./Interpolate.R) script and runs some FDA by animal ID. Currently built only to work with X.TMJdata.rz axis. Runs some continuous registration and regular functional data analysis.  
+This script uses the raw, interprolated data outputed by [Interpolate.R](./Interpolate.R) script and runs some FDA by animal ID. Currently built only to work with X.TMJdata.rz axis. Runs some continuous registration and regular functional data analysis.  
