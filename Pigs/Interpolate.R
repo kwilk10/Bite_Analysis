@@ -35,21 +35,49 @@ inter_func = function(data, cycle){
   # Max cycle for all the pigs. Will need to be adjusted for other animals
   max_cyc = 163
   data = as.data.table(data)
+  ax = colnames(data %>% select(starts_with('X.TMJ')))
+
   # Select just the cycle we want to add data to 
   # Currently just keep the .rz axis. Will need to add other axis later
-  data = data[orig_cycle == cycle][,.(ref_frame, X.TMJdata.rz)]
+#  data = data[orig_cycle == cycle][,.(ref_frame, X.TMJdata.rz)]
   
-  n = max_cyc-dim(data)[1]
+  fin_data = data.table()
   
-  ## This is the actual interprolation step! 
-  interp = as.data.table(approx(data$ref_frame, data$X.TMJdata.rz, n = n+2 ))
+  for(axis in ax){
+    temp = data %>% select('ref_frame',axis)
   
-  colnames(interp) = c('ref_frame', 'X.TMJdata.rz')
-  data2 = rbind(interp, data)
-  data2 = data2[order(ref_frame)][,`:=`(Cycle = cycle, uniq_id = i)]
-  data2 = data2[2:164]
+    n = max_cyc-dim(temp)[1]
+  
+    ## This is the actual interprolation step! 
+  # interp = as.data.table(approx(data$ref_frame, data$X.TMJdata.rz, n = n+2 ))
+    interp = as.data.table(approx(temp$ref_frame, temp[[axis]], n = n+2 ))
+  
+    colnames(interp) = c('ref_frame', axis)
+    data2 = rbind(interp, temp)
+    data2 = data2[order(ref_frame)][,`:=`(Cycle = cycle, uniq_id = i)]
+    data2 = data2[2:164]
+    len = dim(data2)[1]/163
+    lab = rep(1:163, len)
+    data2$lab = lab
+    
+    if(dim(fin_data)[1] == 0){
+      fin_data = data2
+      fin_data = fin_data[, frame := ref_frame]
+    }
+    
+    else{
+      fin_data = fin_data %>% select(-ref_frame)
+      fin_data = merge(fin_data, data2, by = c('lab','Cycle','uniq_id'))
+      fin_data = fin_data[order(uniq_id, Cycle, frame)]
+    }
   ## Return our interprolated data
-  return(data2)
+
+    
+    
+  }
+  fin_data = fin_data[,.(lab, Cycle, uniq_id, X.TMJdata.tx, X.TMJdata.ty, X.TMJdata.tz, 
+                         X.TMJdata.rx, X.TMJdata.ry, X.TMJdata.rz, frame, ref_frame)]
+  return(fin_data)
   
 }
 
@@ -89,4 +117,4 @@ View(pigs_int)
 pigs_fin = merge(pigs_int, uniq_ids, by = 'uniq_id', all.y = TRUE)
 
 ## Finally, we can out put our final dataset to a csv! Woohoo! 
-write.csv(pigs_fin, file = "/Users/maraudersmap/Desktop/FDA/pig_cycles_int.csv")
+write.csv(pigs_fin, file = "/Users/maraudersmap/Desktop/FDA/pig_cycles_int_full.csv")
