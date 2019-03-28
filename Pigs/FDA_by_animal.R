@@ -17,162 +17,13 @@ library(dplyr); library(fda)
 #setwd('~/Desktop/FDA')
 setwd('~/Desktop/FDA')
 
-
-data_wide_func = function(data,food_type = NULL, animal_num){
-  
-  #if(!is.null(animal_num)){
-  #  data = data[animal_id == animal_num ]
-  #}
-  data = data[animal_id == animal_num]
-  print(head(data))
-  data = data[,.(cyc_id, uniq_id, Cycle, X.TMJdata.rz)]
-  data = data[, Cycle_food := .GRP, .(uniq_id)][,.(cyc_id, Cycle_food, X.TMJdata.rz)]
-  data_wide = dcast(data, cyc_id ~ Cycle_food, value.var = "X.TMJdata.rz")
-  data_wide = data_wide %>% dplyr::select(-cyc_id)
-  cols = sprintf('%s_%d', animal_num, 1:dim(data_wide)[2] )
-  colnames(data_wide) = cols
-  return(data_wide)
-}
-
-
-fda_func = function(data, splines){
-  ## Our parameters
-  #smaller lambda --> overfitting 
-  lambda = 1e-12
-  # number of splits (see knots above, this is the same as the number of knots we had)
-  norder = 6
-  #split 0 to 1 into 84 values (length of our cycles )
-  samples = seq(0,1,length = splines)
-  #samples = seq(0,1,length = cycle_length)
-  
-  # Define the number of basis functions we want
-  nbasis = length(samples) + norder -2
-  # Create basic basis functions with our parameters
-  mybasis = create.bspline.basis(c(0,1), nbasis, norder, samples)
-  myfdPar = fdPar(mybasis, 4, lambda)
-  # Dataset has to be in matrix form
-  dataset = as.matrix(data)
-  ## Lets make it a fd object based off of our basis functions! woohoo! 
-  myfd = smooth.basis(seq(0,1,length = 163), dataset, myfdPar)$fd
-  
-}
-
-plt_func = function(fda_data, full_data, animal_num, type, food = NULL, stderrList = NULL){
-  
-  carrot_wide = full_data %>% dplyr:: select(starts_with('carrot'))
-  almond_wide = full_data %>% dplyr:: select(starts_with('almond'))
-  apple_wide = full_data %>% dplyr:: select(starts_with('apple'))
-  
-  pig5_wide = full_data %>% dplyr:: select(starts_with('5'))
-  pig6_wide = full_data %>% dplyr:: select(starts_with('6'))
-  
-  pig9_wide = full_data %>% dplyr:: select(starts_with('9'))
-  pig10_wide = full_data %>% dplyr:: select(starts_with('10'))
-  print(head(pig10_wide))
-  
-  
-  
-  
-  
-  
-  s_basis <- fda_data$basis
-  
-  basismat <- eval.basis(seq(0,1,length=163),s_basis)
-  ## this maps the observations to the coefficients (??)
-  y2cMap <- solve(crossprod(basismat)) %*% t(basismat)
-  
-  pig5_reps = dim(pig5_wide)[2]
-  pig6_reps = dim(pig6_wide)[2]
-  pig9_reps = dim(pig9_wide)[2]
-  pig10_reps = dim(pig10_wide)[2]
-  
-  
-  reps = dim(full_data)[2]
-  
-  ## Groups names --> Names of animals 
-  groupnames = c('Pig5','Pig6','Pig9','Pig10')
-  # indices for groups
-  
-  fiveindex <- seq(1,pig5_reps)
-  sixindex <- seq(pig5_reps+1,pig5_reps + pig6_reps)
-  nineindex <- seq(sixindex[pig6_reps]+1, sixindex[pig6_reps] + pig9_reps)
-  tenindex <- seq(nineindex[pig9_reps]+1, nineindex[pig9_reps] + pig10_reps)
-  
-  gmat <- matrix(0, reps, 2)
-  # Fist column = 1s
-  gmat[ ,1] <- 1
-  # Second column = groups
-  if(animal_num == 5){
-    gmat[fiveindex, 2] <- 1
-  }
-  
-  if(animal_num == 6){ 
-    gmat[sixindex,2] <- 1
-  }
-  
-  if(animal_num == 9){
-    gmat[nineindex, 2] <-1
-  }
-  
-  if(animal_num == 10){
-    gmat[tenindex, 2] <-1
-  }
-  
-  
-  ## Set up xfdlist for regression
-  #this is for our covariates
-  #First covariate is just the intercept so a bunch of 1's
-  #Next covariate is carrot, 3rd if almond, 4th is apple
-  p <- 2
-  xfdlist <- vector("list",p)
-  for (j in 1:p) xfdlist[[j]] <- gmat[,j]
-  
-  
-  bwtlist = list(fdPar(s_basis,2,0), fdPar(s_basis,2,0))
-  fRegressList <- fRegress(fda_data, xfdlist, bwtlist)
-  print(names(fRegressList))
-  
-  # get predicted functions
-  yhatfdobj <- fRegressList$yhatfdobj
-  
-  # compute residual matrix and get covariance of residuals
-  cycletime <- seq(0,1, length=163)
-  #predicted from regression
-  yhatmat <- eval.fd(cycletime, yhatfdobj$fd)
-  #from the actual data
-  ymat <- eval.fd(cycletime, fda_data)
-  #errors 
-  speciesmat <- ymat[,1:reps] - yhatmat[,1:reps]
-  
-  SigmaE <- var(t(speciesmat))
-  
-  if(is.null(stderrList)){
-    print('running stderrList')
-    stderrList <- fRegress.stderr(fRegressList, y2cMap, SigmaE)
-    print('finished running stderrList!')
-    file = sprintf('by_animal/stderrList_%s_%s', type, animal_num)
-    saveRDS(stderrList, file)
-  }
-  
-  
-  betastderrlist <- stderrList$betastderrlist
-  
-  
-  #plotbeta(fRegressList$betaestlist, betastderrlist)
-  xlabel = sprintf('%s_%s',type, animal_num )
-  #add an xlab = xlabel to the following to add label to the plots
-  # can adjust to anything you would like
-  plotbeta(fRegressList$betaestlist, betastderrlist)
-  
-  
-  
-  
-  
-}
-
+## Use the source for common functions
+## This file must either be in current working directory 
+## or full file destination must be specified
+source('FDA_CoCmmon_funcs.R')
 
 ## Read our interprolated data in
-pigs = fread('pig_cycles_int.csv')
+pigs = fread('pig_cycles_int_full.csv')
 
 ## Add a column indicating place in cycle
 ## Cycle length = 163
@@ -180,25 +31,113 @@ pigs = fread('pig_cycles_int.csv')
 id = rep(1:163, 1122)
 pigs[,cyc_id := id]
 
+## Use data_wide_func on all pigs
+pig10 = data_wide_func(pigs, animal_num = 10, food = 'carrot', axis = 'X.TMJdata.rz')
+pig5 = data_wide_func(pigs, animal_num = 5, food = 'carrot', axis = 'X.TMJdata.rz')
+pig6 = data_wide_func(pigs, animal_num = 6, food = 'carrot', axis = 'X.TMJdata.rz')
+pig9 = data_wide_func(pigs, animal_num = 9, food = 'carrot', axis = 'X.TMJdata.rz')
+for(f in c('apple','almond')){
+  new_df= data_wide_func(pigs, animal_num = 10, food = f, axis = 'X.TMJdata.rz')
+  pig10 = cbind(pig10, new_df)
+  
+  new_df= data_wide_func(pigs, animal_num = 5, food = f, axis = 'X.TMJdata.rz')
+  pig5 = cbind(pig5, new_df)
+  
+  new_df= data_wide_func(pigs, animal_num = 6, food = f, axis = 'X.TMJdata.rz')
+  pig6 = cbind(pig6, new_df)
+  
+  new_df= data_wide_func(pigs, animal_num = 9, food = f, axis = 'X.TMJdata.rz')
+  pig9 = cbind(pig9, new_df)
+}
 
-data_wide_func(pigs, animal_num = 5, )
-pig6 = data_wide_func(pigs, animal_num = 6)
-pig9 = data_wide_func(pigs, animal_num = 9)
-pig10 = data_wide_func(pigs, animal_num = 10)
-
-full_data = cbind(pig5, pig6, pig9, pig10)
+## Full wide-data set (for axis 'X.TMJdata.rz')
+full_pigs = cbind(pig5, pig6, pig9, pig10)
 
 animal_fda = fda_func(full_data, 20)
 
-## These are the previously saved standard deviation list objects
-  # These are needed to create the confidence bounds for regression
-five_fd = readRDS('by_animal/stderrList_fda_5')
-six_fd = readRDS('by_animal/stderrList_fda_6')
-nine_fd = readRDS('by_animal/stderrList_fda_9')
-ten_fd = readRDS('by_animal/stderrList_fda_10')
 
-# This outputs the plots
-plt_func(animal_fda, full_data, animal_num = 5, 'fda', food = NULL, stderrList = five_fd)
-plt_func(animal_fda, full_data, animal_num = 6, 'fda', food = NULL, stderrList = six_fd)
-plt_func(animal_fda, full_data, animal_num = 9, 'fda', food = NULL, stderrList = nine_fd)
-plt_func(animal_fda, full_data, animal_num = 10, 'fda', food = NULL, stderrList = ten_fd)
+## make the functional data object for our FULL data. This is what we will use
+  ## to create our Overall Mean that we are going to compare against
+full_fda = fda_func(full_pigs, 20)
+
+plot(mean(full_fda), ylim = c(-20, 0))
+
+## plot_type = 1 will give the overall mean
+
+animal_reg = list()
+for(n in c(5, 6, 9, 10)){
+  animal_reg[[n]] = plt_func_a(fda_data = full_fda, full_data= full_pigs, animal_num = n, type = 'fda', 
+                               stderrList = NULL,
+                               ylim = NULL, plot_type = 1)
+  
+}
+
+## plot overall_mean
+plotbeta_n(animal_reg[[5]][[1]], animal_reg[[5]][[2]], plot_type = 1, ylim = c(-20, 0))
+
+## plot how each animal now compare to this overall mean...
+  ## 9/10 have waaay bigger CIs, not sure why...
+plotbeta_n(animal_reg[[5]][[1]], animal_reg[[5]][[2]], plot_type = 2, ylim = c(-6, 6))
+
+plotbeta_n(animal_reg[[6]][[1]], animal_reg[[6]][[2]], plot_type = 2, ylim = c(-6, 6))
+
+plotbeta_n(animal_reg[[9]][[1]], animal_reg[[9]][[2]], plot_type = 2, ylim = c(-6, 6))
+
+plotbeta_n(animal_reg[[10]][[1]], animal_reg[[10]][[2]], plot_type = 2, ylim = c(-6, 6))
+
+
+##################### 5 ##########################################
+five_fda = fda_func(pig5, 20)
+
+five = plt_func_f(fda_data = five_fda, full_data = pig5, food = 'carrot', type = 'fda', 
+                               stderrList = NULL,
+                               ylim = NULL, plot_type = 1)
+
+##################### 6 ##########################################
+six_fda = fda_func(pig6, 20)
+
+six = plt_func_f(fda_data = six_fda, full_data = pig6, food = 'carrot', type = 'fda', 
+                 stderrList = NULL,
+                 ylim = NULL, plot_type = 1)
+
+##################### 9 ##########################################
+nine_fda = fda_func(pig9, 20)
+
+nine = plt_func_f(fda_data = nine_fda, full_data = pig9, food = 'carrot', type = 'fda', 
+                 stderrList = NULL,
+                 ylim = NULL, plot_type = 1)
+
+##################### 10 ##########################################
+ten_fda = fda_func(pig10, 20)
+
+ten = plt_func_f(fda_data = ten_fda, full_data = pig10, food = 'carrot', type = 'fda', 
+                 stderrList = NULL,
+                 ylim = NULL, plot_type = 1)
+
+plotbeta_n(five[[1]],five[[2]], plot_type = 1, ylim = c(-20, 0))
+plotbeta_n(six[[1]],six[[2]], plot_type = 1, ylim = c(-20, 0))
+plotbeta_n(nine[[1]],nine[[2]], plot_type = 1, ylim = c(-20, 0))
+plotbeta_n(ten[[1]],ten[[2]], plot_type = 1, ylim = c(-20, 0))
+
+
+## Run the below to save plots into single pdf file
+pdf('pigs_byanimal.pdf', width = 20, height = 30)
+#jpeg('pigs_10_9_6_5.jpg')
+par(mfrow=c(4,2), cex = 1.5)
+
+plotbeta_n(five[[1]],five[[2]], plot_type = 1, ylim = c(-20, 0))
+plotbeta_n(animal_reg[[5]][[1]], animal_reg[[5]][[2]], plot_type = 2, ylim = c(-6, 6))
+
+plotbeta_n(six[[1]],six[[2]], plot_type = 1, ylim = c(-20, 0))
+plotbeta_n(animal_reg[[6]][[1]], animal_reg[[6]][[2]], plot_type = 2, ylim = c(-6, 6))
+
+plotbeta_n(nine[[1]],nine[[2]], plot_type = 1, ylim = c(-20, 0))
+plotbeta_n(animal_reg[[9]][[1]], animal_reg[[9]][[2]], plot_type = 2, ylim = c(-6, 6))
+
+plotbeta_n(ten[[1]],ten[[2]], plot_type = 1, ylim = c(-20, 0))
+plotbeta_n(animal_reg[[10]][[1]], animal_reg[[10]][[2]], plot_type = 2, ylim = c(-6, 6))
+
+
+dev.off()
+
+
