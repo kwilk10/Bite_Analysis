@@ -59,6 +59,34 @@ data_wide_func = function(data,food_type, axis, animal_num = NULL){
   return(data_wide)
 }
 
+
+pigs_working_data = function(data, axis){
+  id = rep(1:163, 1122)
+  pigs[,cyc_id := id]
+
+  pig10 = data_wide_func(data, animal_num = 10, food = 'carrot', axis = axis)
+  pig5 = data_wide_func(data, animal_num = 5, food = 'carrot', axis = axis)
+  pig6 = data_wide_func(data, animal_num = 6, food = 'carrot', axis = axis)
+  pig9 = data_wide_func(data, animal_num = 9, food = 'carrot', axis = axis)
+  for(f in c('apple','almond')){
+    new_df= data_wide_func(data, animal_num = 10, food = f, axis = axis)
+    pig10 = cbind(pig10, new_df)
+  
+    new_df= data_wide_func(data, animal_num = 5, food = f, axis = axis)
+    pig5 = cbind(pig5, new_df)
+  
+    new_df= data_wide_func(data, animal_num = 6, food = f, axis = axis)
+    pig6 = cbind(pig6, new_df)
+  
+   new_df= data_wide_func(data, animal_num = 9, food = f, axis = axis)
+    pig9 = cbind(pig9, new_df)
+  }
+
+  ## Full wide-data set 
+  full_pigs = cbind(pig5, pig6, pig9, pig10)
+}
+
+
 ## This outputs a regular functional data object
 ## The arguments are your data, in wide format (so 1 column for each cycle)
 # splines --> number of splines you want to use to fit your data (I think...)
